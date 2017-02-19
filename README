@@ -1,3 +1,5 @@
+@login.deepthought2.umd.edu
+
 module load openmpi
 mpicc -o mpi_hello mpi_hello.c
 sbatch run.sh > log
