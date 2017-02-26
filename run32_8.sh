@@ -1,5 +1,6 @@
 #!/bin/bash
-#SBATCH --ntasks=4
+#SBATCH --ntasks=32
+#SBATCH --nodes=8
 #SBATCH -t 00:00:30
 #SBATCH --mem-per-cpu=2048
 #SBATCH --share
