@@ -318,7 +318,7 @@ int main(int argc, char** argv) {
     free(nextCoordinate);
 
     MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
-    end = MPI_Wtime();
+    int end = MPI_Wtime();
 
     MPI_Finalize();
 
