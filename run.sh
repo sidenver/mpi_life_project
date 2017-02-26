@@ -5,4 +5,4 @@
 #SBATCH --exclusive
 
 
-mpirun life_mpi ./life.data.1 100 250 250
+mpirun life_mpi ./life.data.2 100 250 250
