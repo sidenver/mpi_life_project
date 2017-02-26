@@ -17,6 +17,7 @@ void decompose_domain(int X_limit, int world_rank,
     // Give remainder to last process
     *subX_size += X_limit % world_size;
   }
+  printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
 }
 
 void initialize_boards(char* filename, int world_rank, int world_size, 
