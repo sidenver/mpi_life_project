@@ -28,13 +28,14 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     {
         bool** totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
         totalCoordinate[0] = (bool *) calloc ((X_limit)*(Y_limit+2), sizeof(bool));
-        for(int x = 0; x < X_limit; x++){
+        int i, x;
+        for(x = 0; x < X_limit; x++){
             totalCoordinate[x] = (*totalCoordinate + (Y_limit+2) * x);
         }
 
         coordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
         coordinate[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
-        for(int x = 0; x < subX_size+2; x++){
+        for(x = 0; x < subX_size+2; x++){
             coordinate[x] = (*coordinate + (Y_limit+2) * x);
         }
 
@@ -51,7 +52,7 @@ void initialize_boards(char* filename, int world_rank, int world_size,
         }
         fclose(fp);
 
-        for (int i = 1; i < world_size; ++i)
+        for (i = 1; i < world_size; ++i)
         {
             if (i!=world_size-1){
                 MPI_Send(totalCoordinate[i * subX_size], 
@@ -69,7 +70,8 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     } else {
         coordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
         coordinate[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
-        for(int x = 0; x < subX_size+2; x++){
+        int x;
+        for(x = 0; x < subX_size+2; x++){
             coordinate[x] = (*coordinate + (Y_limit+2) * x);
         }
 
@@ -80,7 +82,8 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     
     nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
     nextCoordinate[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
-    for(int x = 0; x < subX_size+2; x++){
+    int x;
+    for(x = 0; x < subX_size+2; x++){
         nextCoordinate[x] = (*nextCoordinate + (Y_limit+2) * x);
     }
 }
@@ -187,14 +190,15 @@ int main(int argc, char** argv) {
         
         coordinate = (bool **) malloc((X_limit+2)*sizeof(bool*));
         coordinate[0] = (bool *) calloc ((X_limit+2)*(Y_limit+2), sizeof(bool));
-        for(int x = 0; x < X_limit+2; x++){
+        int i, x, y;
+        for(x = 0; x < X_limit+2; x++){
             coordinate[x] = (*coordinate + (Y_limit+2) * x);
         }
 
         
         nextCoordinate = (bool **) malloc((X_limit+2)*sizeof(bool*));
         nextCoordinate[0] = (bool *) calloc ((X_limit+2)*(Y_limit+2), sizeof(bool));
-        for(int x = 0; x < X_limit+2; x++){
+        for(x = 0; x < X_limit+2; x++){
             nextCoordinate[x] = (*nextCoordinate + (Y_limit+2) * x);
         }
 
@@ -210,9 +214,9 @@ int main(int argc, char** argv) {
 
         bool **temp;
 
-        for(int i=0;i<iteration;++i){
-            for(int x=1;x<=X_limit;++x){
-                for(int y=1;y<=Y_limit;++y){
+        for(i=0;i<iteration;++i){
+            for(x=1;x<=X_limit;++x){
+                for(y=1;y<=Y_limit;++y){
                     int count = coordinate[x-1][y-1]+
                                 coordinate[x-1][y]+
                                 coordinate[x-1][y+1]+
@@ -245,8 +249,8 @@ int main(int argc, char** argv) {
         }
 
 
-        for(int x=1;x<=X_limit;++x){
-            for(int y=1;y<=Y_limit;++y){
+        for(x=1;x<=X_limit;++x){
+            for(y=1;y<=Y_limit;++y){
                 if (coordinate[x][y])
                 {
                     printf("%d %d\n", x-1, y-1);
@@ -264,9 +268,9 @@ int main(int argc, char** argv) {
                         X_limit, Y_limit,
                         subX_start, subX_size,
                         coordinate, nextCoordinate)
-
-        for(int x=1;x<=subX_size;++x){
-            for(int y=1;y<=Y_limit;++y){
+        int x, y;
+        for(x=1;x<=subX_size;++x){
+            for(y=1;y<=Y_limit;++y){
                 if (coordinate[x][y])
                 {
                     printf("%d %d\n", subX_start+x-1, y-1);
