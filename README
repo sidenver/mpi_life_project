@@ -4,3 +4,5 @@ module load openmpi
 mpicc -o mpi_hello mpi_hello.c
 sbatch run.sh > log
 squeue -u cmsc714-1bv7
+
+bash -c 'diff <(sort slurm-9840597.out) <(sort final.data.out)'
