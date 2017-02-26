@@ -317,14 +317,14 @@ int main(int argc, char** argv) {
     free(nextCoordinate[0]);
     free(nextCoordinate);
 
-    MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+    MPI_Barrier(MPI_COMM_WORLD);
     int end = MPI_Wtime();
-
-    MPI_Finalize();
 
     if (world_rank == 0) { /* use time on master node */
         printf("Runtime with %d processes on dataset %s = %f\n", world_size, argv[1], end-start);
     }
+
+    MPI_Finalize();
 
     return 0;
 }
