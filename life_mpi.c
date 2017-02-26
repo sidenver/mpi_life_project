@@ -17,7 +17,7 @@ void decompose_domain(int X_limit, int world_rank,
     // Give remainder to last process
     *subX_size += X_limit % world_size;
   }
-  printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
+  // printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
 }
 
 void initialize_boards(char* filename, int world_rank, int world_size, 
@@ -186,6 +186,9 @@ int main(int argc, char** argv) {
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
+    MPI_Barrier(MPI_COMM_WORLD);
+    int start = MPI_Wtime();
+
     int iteration;
     sscanf(argv[2], "%d", &iteration);
 
@@ -296,7 +299,7 @@ int main(int argc, char** argv) {
 
 
         
-        printf("start printing process %d\n", world_rank);
+        // printf("start printing process %d\n", world_rank);
         for(x=1;x<=subX_size;++x){
             for(y=1;y<=Y_limit;++y){
                 if (coordinate[x][y])
@@ -313,7 +316,15 @@ int main(int argc, char** argv) {
     free(coordinate);
     free(nextCoordinate[0]);
     free(nextCoordinate);
+
+    MPI_Barrier(MPI_COMM_WORLD); /* IMPORTANT */
+    end = MPI_Wtime();
+
     MPI_Finalize();
+
+    if (world_rank == 0) { /* use time on master node */
+        printf("Runtime with %d processes on dataset %s = %f\n", world_size, argv[1], end-start);
+    }
 
     return 0;
 }
