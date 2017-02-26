@@ -24,7 +24,7 @@ void initialize_boards(char* filename, int world_rank, int world_size,
                         int X_limit, int Y_limit,
                         int subX_start, int subX_size,
                         bool **coordinate, bool **nextCoordinate) {
-
+    MPI_Status status;
     if (world_rank == 0)
     {
         bool** totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
@@ -78,7 +78,10 @@ void initialize_boards(char* filename, int world_rank, int world_size,
 
         MPI_Recv(coordinate[1], (subX_size)*(Y_limit+2),
            MPI_C_BOOL, 0, 0, MPI_COMM_WORLD,
-           MPI_STATUS_IGNORE);
+           &status);
+        int incoming_size;
+        MPI_Get_count(&status, MPI_C_BOOL, &incoming_size);
+        printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
     }
     
     nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
