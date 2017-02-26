@@ -97,8 +97,9 @@ void initialize_boards(char* filename, int world_rank, int world_size,
 }
 
 void cycleOfLife(int subX_size, int Y_limit, bool **coordinate, bool **nextCoordinate) {
-    for(int x=1;x<=subX_size;++x){
-        for(int y=1;y<=Y_limit;++y){
+    int x, y;
+    for(x=1;x<=subX_size;++x){
+        for(y=1;y<=Y_limit;++y){
             int count = coordinate[x-1][y-1]+
                         coordinate[x-1][y]+
                         coordinate[x-1][y+1]+
