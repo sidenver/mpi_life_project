@@ -159,7 +159,8 @@ void initialize_boards(char* filename, int world_rank, int world_size,
 
 
 int main(int argc, char** argv) {
-    
+    bool **coordinate;
+    bool **nextCoordinate;
 
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
@@ -188,9 +189,7 @@ int main(int argc, char** argv) {
 
     
     if (world_size == 1){
-        bool **coordinate;
-        bool **nextCoordinate;
-        
+
         coordinate = (bool **) malloc((X_limit+2)*sizeof(bool*));
         coordinate[0] = (bool *) calloc ((X_limit+2)*(Y_limit+2), sizeof(bool));
         int i, x, y;
@@ -266,8 +265,7 @@ int main(int argc, char** argv) {
     } else {
         int subX_start;
         int subX_size;
-        bool **coordinate;
-        bool **nextCoordinate;
+        
         decompose_domain(X_limit, world_rank, world_size, &subX_start, &subX_size);
         initialize_boards(argv[1], world_rank, world_size, 
                         X_limit, Y_limit,
