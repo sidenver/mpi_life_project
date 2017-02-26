@@ -23,21 +23,21 @@ void decompose_domain(int X_limit, int world_rank,
 void initialize_boards(char* filename, int world_rank, int world_size, 
                         int X_limit, int Y_limit,
                         int subX_start, int subX_size,
-                        bool **coordinate, bool **nextCoordinate) {
+                        bool ***coordinate, bool ***nextCoordinate) {
     MPI_Status status;
     if (world_rank == 0)
     {
-        bool** totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
+        bool **totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
         totalCoordinate[0] = (bool *) calloc ((X_limit)*(Y_limit+2), sizeof(bool));
         int i, x;
         for(x = 0; x < X_limit; x++){
             totalCoordinate[x] = (*totalCoordinate + (Y_limit+2) * x);
         }
 
-        coordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
-        coordinate[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
+        *coordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
+        (*coordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
         for(x = 0; x < subX_size+2; x++){
-            coordinate[x] = (*coordinate + (Y_limit+2) * x);
+            (*coordinate)[x] = (**coordinate + (Y_limit+2) * x);
         }
 
         FILE *fp;
@@ -47,7 +47,7 @@ void initialize_boards(char* filename, int world_rank, int world_size,
         while(fscanf( fp,"%d %d", &row, &col )==2) {
             totalCoordinate[row][col + 1] = true;
             if (row < subX_size) {
-                coordinate[row + 1][col + 1] = true;
+                (*coordinate)[row + 1][col + 1] = true;
             }
             //nextCoordinate[row+1][col+1] = true;
         }
@@ -67,16 +67,15 @@ void initialize_boards(char* filename, int world_rank, int world_size,
         free(totalCoordinate[0]);
         free(totalCoordinate);
 
-
     } else {
-        coordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
-        coordinate[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
+        (*coordinate) = (bool **) malloc((subX_size+2)*sizeof(bool*));
+        (*coordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
         int x;
         for(x = 0; x < subX_size+2; x++){
-            coordinate[x] = (*coordinate + (Y_limit+2) * x);
+            (*coordinate)[x] = (**coordinate + (Y_limit+2) * x);
         }
 
-        MPI_Recv(coordinate[1], (subX_size)*(Y_limit+2),
+        MPI_Recv((*coordinate)[1], (subX_size)*(Y_limit+2),
            MPI_C_BOOL, 0, 0, MPI_COMM_WORLD,
            &status);
         int incoming_size;
@@ -84,11 +83,11 @@ void initialize_boards(char* filename, int world_rank, int world_size,
         printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
     }
     
-    nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
-    nextCoordinate[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
+    *nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
+    (*nextCoordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
     int x;
     for(x = 0; x < subX_size+2; x++){
-        nextCoordinate[x] = (*nextCoordinate + (Y_limit+2) * x);
+        (*nextCoordinate)[x] = (**nextCoordinate + (Y_limit+2) * x);
     }
 }
 
@@ -160,8 +159,7 @@ void initialize_boards(char* filename, int world_rank, int world_size,
 
 
 int main(int argc, char** argv) {
-    bool **coordinate;
-    bool **nextCoordinate;
+    
 
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
@@ -190,7 +188,8 @@ int main(int argc, char** argv) {
 
     
     if (world_size == 1){
-
+        bool **coordinate;
+        bool **nextCoordinate;
         
         coordinate = (bool **) malloc((X_limit+2)*sizeof(bool*));
         coordinate[0] = (bool *) calloc ((X_limit+2)*(Y_limit+2), sizeof(bool));
@@ -267,12 +266,15 @@ int main(int argc, char** argv) {
     } else {
         int subX_start;
         int subX_size;
+        bool **coordinate;
+        bool **nextCoordinate;
         decompose_domain(X_limit, world_rank, world_size, &subX_start, &subX_size);
         initialize_boards(argv[1], world_rank, world_size, 
                         X_limit, Y_limit,
                         subX_start, subX_size,
-                        coordinate, nextCoordinate);
+                        &coordinate, &nextCoordinate);
         int x, y;
+        printf("start printing process %d\n", world_rank);
         for(x=1;x<=subX_size;++x){
             for(y=1;y<=Y_limit;++y){
                 if (coordinate[x][y])
