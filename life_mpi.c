@@ -60,7 +60,7 @@ void initialize_boards(char* filename, int world_rank, int world_size,
                     subX_size*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
             } else {
                 MPI_Send(totalCoordinate[i * subX_size], 
-                    (subX_size + X_limit % subX_size)*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
+                    (subX_size + X_limit % world_size)*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
             }
         }
 
