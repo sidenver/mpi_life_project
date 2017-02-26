@@ -80,7 +80,12 @@ void initialize_boards(char* filename, int world_rank, int world_size,
            &status);
         int incoming_size;
         MPI_Get_count(&status, MPI_C_BOOL, &incoming_size);
-        printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
+        if (incoming_size!=(subX_size)*(Y_limit+2))
+        {
+            printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+
     }
     
     *nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
@@ -91,72 +96,74 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     }
 }
 
-// void cycleOfLife(int subX_size, int Y_limit,
-//                  bool **coordinate, bool **nextCoordinate) {
-//     bool **temp;
-//     for(int x=1;x<=subX_size;++x){
-//         for(int y=1;y<=Y_limit;++y){
-//             int count = coordinate[x-1][y-1]+
-//                         coordinate[x-1][y]+
-//                         coordinate[x-1][y+1]+
-//                         coordinate[x][y-1]+
-//                         coordinate[x][y+1]+
-//                         coordinate[x+1][y-1]+
-//                         coordinate[x+1][y]+
-//                         coordinate[x+1][y+1];
+void cycleOfLife(int subX_size, int Y_limit, bool **coordinate, bool **nextCoordinate) {
+    for(int x=1;x<=subX_size;++x){
+        for(int y=1;y<=Y_limit;++y){
+            int count = coordinate[x-1][y-1]+
+                        coordinate[x-1][y]+
+                        coordinate[x-1][y+1]+
+                        coordinate[x][y-1]+
+                        coordinate[x][y+1]+
+                        coordinate[x+1][y-1]+
+                        coordinate[x+1][y]+
+                        coordinate[x+1][y+1];
             
-//             if (coordinate[x][y]){
-//                 if (count!=2&&count!=3){
-//                     nextCoordinate[x][y]=false;
-//                 }
-//                 else{
-//                     nextCoordinate[x][y]=true;
-//                 }
-//             }
-//             else{
-//                 if (count==3){
-//                     nextCoordinate[x][y]=true;
-//                 }
-//                 else{
-//                     nextCoordinate[x][y]=false;
-//                 }
-//             }
+            if (coordinate[x][y]){
+                if (count!=2&&count!=3){
+                    nextCoordinate[x][y]=false;
+                }
+                else{
+                    nextCoordinate[x][y]=true;
+                }
+            }
+            else{
+                if (count==3){
+                    nextCoordinate[x][y]=true;
+                }
+                else{
+                    nextCoordinate[x][y]=false;
+                }
+            }
 
-//         }
-//     }
-//     temp = nextCoordinate; nextCoordinate = coordinate; coordinate = temp;
+        }
+    }
+    
 
-// }
+}
 
-// void send_boundary(bool* outgoing, int Y_limit, int target) {
-//   // Send the data as an array of MPI_BYTEs to the next process.
-//   // The last process sends to process zero.
-//   MPI_Send(outgoing,
-//            Y_limit+2, 
-//            MPI_C_BOOL,
-//            target, 0, MPI_COMM_WORLD);
+void copyBound(int subX_size, int world_rank, int world_size, int Y_limit, bool **coordinate) {
 
-// }
+    MPI_Status status;
+    int up_rank  = world_rank - 1;
+    int down_rank = world_rank + 1;
 
-// void receive_boundary(bool* incoming, int Y_limit, int sender) {
-//   // Status for new incoming
-//   MPI_Status status;
+    enum TAGS {
+        TOUP,
+        TODOWN
+    };
 
-//   // Resize your incoming walker buffer based on how much data is
-//   // being received
-//   MPI_Recv(incoming, Y_limit+2,
-//            MPI_C_BOOL, sender, 0, MPI_COMM_WORLD,
-//            &status);
+    // Some MPIs deadlock if a single process tries to communicate
+    // with itself
+    if (world_size != 1) {
+        // copy sides to neighboring processes
+        if (up_rank < 0) {
+            MPI_Recv(coordinate[subX_size+1], Y_limit+2, MPI_C_BOOL, down_rank, TOUP, MPI_COMM_WORLD, &status);
+            MPI_Send(coordinate[subX_size], Y_limit+2, MPI_C_BOOL, down_rank, TODOWN, MPI_COMM_WORLD);
+        } else if (down_rank >= world_size) {
+            MPI_Send(coordinate[1], Y_limit+2, MPI_C_BOOL, up_rank, TOUP, MPI_COMM_WORLD);
+            MPI_Recv(coordinate[0], Y_limit+2, MPI_C_BOOL, up_rank, TODOWN, MPI_COMM_WORLD, &status);
+        } else {
+            MPI_Sendrecv(coordinate[1], Y_limit+2, MPI_C_BOOL, up_rank, TOUP,
+                coordinate[subX_size+1], Y_limit+2, MPI_C_BOOL, down_rank, TOUP,
+                MPI_COMM_WORLD, &status);
+            
+            MPI_Sendrecv(coordinate[subX_size], Y_limit+2, MPI_C_BOOL, down_rank, TODOWN, 
+                coordinate[0], Y_limit+2, MPI_C_BOOL, up_rank, TODOWN, 
+                MPI_COMM_WORLD, &status);
+        }
+    }
 
-//   int incoming_walkers_size;
-//   MPI_Get_count(&status, MPI_C_BOOL, &incoming_walkers_size);
-//   if (incoming_walkers_size!=Y_limit+2)
-//   {
-//       // recieve does not match
-//       MPI_Abort(MPI_COMM_WORLD, 1);
-//   }
-// }
-
+}
 
 int main(int argc, char** argv) {
     bool **coordinate;
@@ -265,13 +272,29 @@ int main(int argc, char** argv) {
     } else {
         int subX_start;
         int subX_size;
+        bool **temp;
         
         decompose_domain(X_limit, world_rank, world_size, &subX_start, &subX_size);
         initialize_boards(argv[1], world_rank, world_size, 
                         X_limit, Y_limit,
                         subX_start, subX_size,
                         &coordinate, &nextCoordinate);
-        int x, y;
+        int i, x, y;
+        for (i = 0; i < iteration; ++i)
+        {
+            // do send and receive
+            // TODO
+            copyBound(subX_size, world_rank, world_size, Y_limit, coordinate);
+
+            // update and swap next with current
+            cycleOfLife(subX_size, Y_limit, coordinate, nextCoordinate);
+            temp = nextCoordinate; nextCoordinate = coordinate; coordinate = temp;
+
+        }
+
+
+
+        
         printf("start printing process %d\n", world_rank);
         for(x=1;x<=subX_size;++x){
             for(y=1;y<=Y_limit;++y){
