@@ -267,7 +267,7 @@ int main(int argc, char** argv) {
         initialize_boards(argv[1], world_rank, world_size, 
                         X_limit, Y_limit,
                         subX_start, subX_size,
-                        coordinate, nextCoordinate)
+                        coordinate, nextCoordinate);
         int x, y;
         for(x=1;x<=subX_size;++x){
             for(y=1;y<=Y_limit;++y){
