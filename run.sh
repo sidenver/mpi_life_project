@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --ntasks=16
+#SBATCH --ntasks=4
 #SBATCH -t 00:00:30
 #SBATCH --mem-per-cpu=2048
 #SBATCH --exclusive
