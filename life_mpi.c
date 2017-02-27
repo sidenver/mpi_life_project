@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
         }
 
         MPI_Gatherv(coordinate[1], subX_size_arr[world_rank], MPI_C_BOOL,
-            longCoordinate[0], subX_size_arr, subX_start_arr, MPI_C_BOOL,
+            totalCoordinate[0], subX_size_arr, subX_start_arr, MPI_C_BOOL,
             0, MPI_COMM_WORLD);
 
         
@@ -325,7 +325,7 @@ int main(int argc, char** argv) {
         if (world_rank==0) {
             for(x=0;x<X_limit;++x) {
                 for(y=1;y<=Y_limit;++y) {
-                    if (longCoordinate[x][y]) {
+                    if (totalCoordinate[x][y]) {
                         printf("%d %d\n", x, y-1);
                     }
                 }
