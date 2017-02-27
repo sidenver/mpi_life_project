@@ -18,14 +18,15 @@ int main(int argc, char** argv) {
     bool **coordinate;
     coordinate = (bool **) malloc((X_limit+2)*sizeof(bool*));
     coordinate[0] = (bool *) calloc ((X_limit+2)*(Y_limit+2), sizeof(bool));
-    for(int x = 0; x < X_limit+2; x++){
+    int i, x, y;
+    for(x = 0; x < X_limit+2; x++){
         coordinate[x] = (*coordinate + (Y_limit+2) * x);
     }
 
     bool **nextCoordinate;
     nextCoordinate = (bool **) malloc((X_limit+2)*sizeof(bool*));
     nextCoordinate[0] = (bool *) calloc ((X_limit+2)*(Y_limit+2), sizeof(bool));
-    for(int x = 0; x < X_limit+2; x++){
+    for(x = 0; x < X_limit+2; x++){
         nextCoordinate[x] = (*nextCoordinate + (Y_limit+2) * x);
     }
 
@@ -41,9 +42,9 @@ int main(int argc, char** argv) {
     }
     fclose(fp);
 
-    for(int i=0;i<iteration;++i){
-        for(int x=1;x<=X_limit;++x){
-            for(int y=1;y<=Y_limit;++y){
+    for(i=0;i<iteration;++i){
+        for(x=1;x<=X_limit;++x){
+            for(y=1;y<=Y_limit;++y){
                 int count = coordinate[x-1][y-1]+
                             coordinate[x-1][y]+
                             coordinate[x-1][y+1]+
@@ -76,8 +77,8 @@ int main(int argc, char** argv) {
     }
 
 
-    for(int x=1;x<=X_limit;++x){
-        for(int y=1;y<=Y_limit;++y){
+    for(x=1;x<=X_limit;++x){
+        for(y=1;y<=Y_limit;++y){
             if (coordinate[x][y])
             {
                 printf("%d %d\n", x-1, y-1);

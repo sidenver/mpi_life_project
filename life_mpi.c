@@ -355,9 +355,9 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
     double end = MPI_Wtime();
 
-    if (world_rank == 0) { /* use time on master node */
-        printf("Runtime with %d processes on dataset %s = %f\n", world_size, argv[1], end-start);
-    }
+    // if (world_rank == 0) { /* use time on master node */
+    //     printf("Runtime with %d processes on dataset %s = %f\n", world_size, argv[1], end-start);
+    // }
 
     MPI_Finalize();
 
