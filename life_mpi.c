@@ -34,7 +34,7 @@ void decompose_domain(int X_limit, int world_rank, int world_size,
       
   }
   *subX_start = (*subX_start_arr)[world_rank];
-  *subX_start = (*subX_size_arr)[world_rank];
+  *subX_size = (*subX_size_arr)[world_rank];
 
   printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
 }
@@ -340,6 +340,8 @@ int main(int argc, char** argv) {
     free(coordinate);
     free(nextCoordinate[0]);
     free(nextCoordinate);
+    free(subX_size_arr);
+    free(subX_start_arr);
 
     if (world_rank == 0)
     {
