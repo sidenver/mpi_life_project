@@ -3,41 +3,58 @@
 #include <stdbool.h>
 #include <mpi.h>
 
-void decompose_domain(int X_limit, int world_rank,
-                      int world_size, int* subX_start,
-                      int* subX_size) {
+void decompose_domain(int X_limit, int world_rank, int world_size, 
+                      int* subX_start, int* subX_size, 
+                      int** subX_start_arr, int** subX_size_arr) {
   if (world_size > X_limit) {
     // Don't worry about this special case. Assume the domain size
     // is greater than the world size.
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
-  *subX_start = X_limit / world_size * world_rank;
-  *subX_size = X_limit / world_size;
-  if (world_rank == world_size - 1) {
-    // Give remainder to last process
-    *subX_size += X_limit % world_size;
+  //*subX_start = X_limit / world_size * world_rank;
+  *subX_size_arr = (int *) malloc((world_size)*sizeof(int));
+  *subX_start_arr = (int *) malloc((world_size)*sizeof(int));
+  int base_size = X_limit / world_size;
+  int left = X_limit % world_size;
+  int i;
+  for (i = 0; i < world_size; ++i)
+  {
+      *subX_size_arr[i] = base_size;
+      if (left > 0)
+      {
+          *subX_size_arr[i] += 1;
+          left--;
+      }
+      if (i == 0)
+      {
+          *subX_start_arr[i] = 0;
+      } else {
+          *subX_start_arr[i] = *subX_start_arr[i-1] + *subX_size_arr[i-1]
+      }
+      
   }
-  // printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
+  *subX_start = *subX_start_arr[world_rank];
+  *subX_start = *subX_size_arr[world_rank];
+
+  printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
 }
 
 void initialize_boards(char* filename, int world_rank, int world_size, 
                         int X_limit, int Y_limit,
                         int subX_start, int subX_size,
+                        int* subX_start_arr, int* subX_size_arr,
                         bool ***coordinate, bool ***nextCoordinate) {
     MPI_Status status;
+    bool **totalCoordinate;
+    bool *longCoordinate;
     if (world_rank == 0)
     {
-        bool **totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
+        totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
         totalCoordinate[0] = (bool *) calloc ((X_limit)*(Y_limit+2), sizeof(bool));
+        longCoordinate = totalCoordinate[0];
         int i, x;
         for(x = 0; x < X_limit; x++){
             totalCoordinate[x] = (*totalCoordinate + (Y_limit+2) * x);
-        }
-
-        *coordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
-        (*coordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
-        for(x = 0; x < subX_size+2; x++){
-            (*coordinate)[x] = (**coordinate + (Y_limit+2) * x);
         }
 
         FILE *fp;
@@ -46,47 +63,55 @@ void initialize_boards(char* filename, int world_rank, int world_size,
         int col;
         while(fscanf( fp,"%d %d", &row, &col )==2) {
             totalCoordinate[row][col + 1] = true;
-            if (row < subX_size) {
-                (*coordinate)[row + 1][col + 1] = true;
-            }
-            //nextCoordinate[row+1][col+1] = true;
         }
         fclose(fp);
 
-        for (i = 1; i < world_size; ++i)
-        {
-            if (i!=world_size-1){
-                MPI_Send(totalCoordinate[i * subX_size], 
-                    subX_size*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
-            } else {
-                MPI_Send(totalCoordinate[i * subX_size], 
-                    (subX_size + X_limit % world_size)*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
-            }
-        }
+        // for (i = 1; i < world_size; ++i)
+        // {
+        //     if (i!=world_size-1){
+        //         MPI_Send(totalCoordinate[i * subX_size], 
+        //             subX_size*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
+        //     } else {
+        //         MPI_Send(totalCoordinate[i * subX_size], 
+        //             (subX_size + X_limit % world_size)*(Y_limit+2), MPI_C_BOOL, i, 0, MPI_COMM_WORLD);
+        //     }
+        // }
+    }
 
+
+    (*coordinate) = (bool **) malloc((subX_size+2)*sizeof(bool*));
+    (*coordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
+    int x;
+    for(x = 0; x < subX_size+2; x++){
+        (*coordinate)[x] = (**coordinate + (Y_limit+2) * x);
+    }
+
+    int i;
+    for (i = 0; i < world_size; ++i) {
+        subX_size_arr[i] *= Y_limit+2;
+        subX_start_arr[i] *= Y_limit+2;
+    }
+    // MPI_Recv((*coordinate)[1], (subX_size)*(Y_limit+2),
+    //    MPI_C_BOOL, 0, 0, MPI_COMM_WORLD,
+    //    &status);
+    // int incoming_size;
+    // MPI_Get_count(&status, MPI_C_BOOL, &incoming_size);
+    // if (incoming_size!=(subX_size)*(Y_limit+2))
+    // {
+    //     printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
+    //     MPI_Abort(MPI_COMM_WORLD, 1);
+    // }
+
+    MPI_Scatterv(longCoordinate, subX_size_arr, subX_start_arr,
+        MPI_C_BOOL, (*coordinate)[1], subX_size_arr[world_rank],
+        MPI_C_BOOL, 0, MPI_COMM_WORLD);
+
+    if (world_rank == 0)
+    {
         free(totalCoordinate[0]);
         free(totalCoordinate);
-
-    } else {
-        (*coordinate) = (bool **) malloc((subX_size+2)*sizeof(bool*));
-        (*coordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
-        int x;
-        for(x = 0; x < subX_size+2; x++){
-            (*coordinate)[x] = (**coordinate + (Y_limit+2) * x);
-        }
-
-        MPI_Recv((*coordinate)[1], (subX_size)*(Y_limit+2),
-           MPI_C_BOOL, 0, 0, MPI_COMM_WORLD,
-           &status);
-        int incoming_size;
-        MPI_Get_count(&status, MPI_C_BOOL, &incoming_size);
-        if (incoming_size!=(subX_size)*(Y_limit+2))
-        {
-            printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
-            MPI_Abort(MPI_COMM_WORLD, 1);
-        }
-
     }
+    
     
     *nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
     (*nextCoordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
@@ -277,11 +302,14 @@ int main(int argc, char** argv) {
         int subX_start;
         int subX_size;
         bool **temp;
+        int* subX_start_arr;
+        int* subX_size_arr;
         
-        decompose_domain(X_limit, world_rank, world_size, &subX_start, &subX_size);
+        decompose_domain(X_limit, world_rank, world_size, &subX_start, &subX_size, &subX_start_arr, &subX_size_arr);
         initialize_boards(argv[1], world_rank, world_size, 
                         X_limit, Y_limit,
                         subX_start, subX_size,
+                        subX_start_arr, subX_size_arr,
                         &coordinate, &nextCoordinate);
         int i, x, y;
         for (i = 0; i < iteration; ++i)
@@ -305,7 +333,6 @@ int main(int argc, char** argv) {
                 if (coordinate[x][y])
                 {
                     printf("%d %d\n", subX_start+x-1, y-1);
-                    fflush(stdout);
                 }
             }
         }
