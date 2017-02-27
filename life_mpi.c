@@ -331,6 +331,9 @@ int main(int argc, char** argv) {
                 }
             }
         }
+
+        free(subX_size_arr);
+        free(subX_start_arr);
         
 
     }
@@ -340,10 +343,9 @@ int main(int argc, char** argv) {
     free(coordinate);
     free(nextCoordinate[0]);
     free(nextCoordinate);
-    free(subX_size_arr);
-    free(subX_start_arr);
+    
 
-    if (world_rank == 0)
+    if (world_rank == 0 && world_size!=1)
     {
         free(totalCoordinate[0]);
         free(totalCoordinate);
