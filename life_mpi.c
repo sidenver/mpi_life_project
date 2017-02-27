@@ -305,6 +305,7 @@ int main(int argc, char** argv) {
                 if (coordinate[x][y])
                 {
                     printf("%d %d\n", subX_start+x-1, y-1);
+                    fflush(stdout);
                 }
             }
         }
