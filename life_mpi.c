@@ -36,7 +36,7 @@ void decompose_domain(int X_limit, int world_rank, int world_size,
   *subX_start = (*subX_start_arr)[world_rank];
   *subX_size = (*subX_size_arr)[world_rank];
 
-  printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
+  // printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
 }
 
 void initialize_boards(char* filename, int world_rank, int world_size, 
@@ -315,12 +315,12 @@ int main(int argc, char** argv) {
             temp = nextCoordinate; nextCoordinate = coordinate; coordinate = temp;
 
         }
-        printf("gather start for %d\n", world_rank);
+        // printf("gather start for %d\n", world_rank);
         MPI_Gatherv(coordinate[1], subX_size_arr[world_rank], MPI_C_BOOL,
             buff, subX_size_arr, subX_start_arr, MPI_C_BOOL,
             0, MPI_COMM_WORLD);
         
-        printf("gather end for %d\n", world_rank);
+        // printf("gather end for %d\n", world_rank);
         
         // printf("start printing process %d\n", world_rank);
         if (world_rank==0) {
