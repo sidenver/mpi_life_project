@@ -1,9 +1,20 @@
-@login.deepthought2.umd.edu
+How to run life_sequential.c and life_mpi.c
+===
+
+1. life_sequential.c
+
+gcc -o life_sequential life_sequential.c
+./life_sequential ./final.data 500 500 500 > final.data.out
+
+
+2. life_mpi.c
+
+login to:
+USER@login.deepthought2.umd.edu
 
 module load openmpi
-mpicc -o mpi_hello mpi_hello.c
-sbatch run.sh > log
-squeue -u cmsc714-1bv7
+mpicc -o life_mpi life_mpi.c
+sbatch run.sh
+squeue -u USER
 
 bash -c 'diff <(sort slurm-9840597.out) <(sort final.data.out)'
-bash -c 'diff <(sort slurm-9840596.out) <(sort life.data.2.100.250.250.out)'
