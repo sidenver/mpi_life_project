@@ -29,7 +29,7 @@ void decompose_domain(int X_limit, int world_rank, int world_size,
       {
           *subX_start_arr[i] = 0;
       } else {
-          *subX_start_arr[i] = *subX_start_arr[i-1] + *subX_size_arr[i-1]
+          *subX_start_arr[i] = *subX_start_arr[i-1] + *subX_size_arr[i-1];
       }
       
   }
