@@ -115,7 +115,6 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     
     *nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
     (*nextCoordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
-    int x;
     for(x = 0; x < subX_size+2; x++){
         (*nextCoordinate)[x] = (**nextCoordinate + (Y_limit+2) * x);
     }
