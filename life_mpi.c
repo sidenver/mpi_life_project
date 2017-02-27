@@ -87,8 +87,8 @@ void initialize_boards(char* filename, int world_rank, int world_size,
 
     int i;
     for (i = 0; i < world_size; ++i) {
-        subX_size_arr[i] *= Y_limit+2;
-        subX_start_arr[i] *= Y_limit+2;
+        subX_size_arr[i] *= (Y_limit+2);
+        subX_start_arr[i] *= (Y_limit+2);
     }
     // MPI_Recv((*coordinate)[1], (subX_size)*(Y_limit+2),
     //    MPI_C_BOOL, 0, 0, MPI_COMM_WORLD,
@@ -100,11 +100,11 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     //     printf("incoming size for process %d is %d, where should be %d\n", world_rank, incoming_size, (subX_size)*(Y_limit+2));
     //     MPI_Abort(MPI_COMM_WORLD, 1);
     // }
-
+    printf("scatter start for %d\n", world_rank);
     MPI_Scatterv(longCoordinate, subX_size_arr, subX_start_arr,
         MPI_C_BOOL, (*coordinate)[1], subX_size_arr[world_rank],
         MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    
+    printf("scatter end for %d\n", world_rank);
     *nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
     (*nextCoordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
     for(x = 0; x < subX_size+2; x++){
@@ -315,11 +315,11 @@ int main(int argc, char** argv) {
             temp = nextCoordinate; nextCoordinate = coordinate; coordinate = temp;
 
         }
-
+        printf("gather start for %d\n", world_rank);
         MPI_Gatherv(coordinate[1], subX_size_arr[world_rank], MPI_C_BOOL,
             totalCoordinate[0], subX_size_arr, subX_start_arr, MPI_C_BOOL,
             0, MPI_COMM_WORLD);
-
+        printf("gather end for %d\n", world_rank);
         
         // printf("start printing process %d\n", world_rank);
         if (world_rank==0) {
