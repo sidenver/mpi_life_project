@@ -19,22 +19,22 @@ void decompose_domain(int X_limit, int world_rank, int world_size,
   int i;
   for (i = 0; i < world_size; ++i)
   {
-      *subX_size_arr[i] = base_size;
+      (*subX_size_arr)[i] = base_size;
       if (left > 0)
       {
-          *subX_size_arr[i] += 1;
+          (*subX_size_arr)[i] += 1;
           left--;
       }
       if (i == 0)
       {
-          *subX_start_arr[i] = 0;
+          (*subX_start_arr)[i] = 0;
       } else {
-          *subX_start_arr[i] = *subX_start_arr[i-1] + *subX_size_arr[i-1];
+          (*subX_start_arr)[i] = (*subX_start_arr)[i-1] + (*subX_size_arr)[i-1];
       }
       
   }
-  *subX_start = *subX_start_arr[world_rank];
-  *subX_start = *subX_size_arr[world_rank];
+  *subX_start = (*subX_start_arr)[world_rank];
+  *subX_start = (*subX_size_arr)[world_rank];
 
   printf("process %d start with %d with size %d\n", world_rank, *subX_start, *subX_size);
 }
@@ -43,18 +43,17 @@ void initialize_boards(char* filename, int world_rank, int world_size,
                         int X_limit, int Y_limit,
                         int subX_start, int subX_size,
                         int* subX_start_arr, int* subX_size_arr,
-                        bool ***coordinate, bool ***nextCoordinate) {
+                        bool ***coordinate, bool ***nextCoordinate, bool ***totalCoordinate) {
     MPI_Status status;
-    bool **totalCoordinate;
     bool *longCoordinate;
     if (world_rank == 0)
     {
-        totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
-        totalCoordinate[0] = (bool *) calloc ((X_limit)*(Y_limit+2), sizeof(bool));
-        longCoordinate = totalCoordinate[0];
+        *totalCoordinate = (bool **) malloc((X_limit)*sizeof(bool*));
+        (*totalCoordinate)[0] = (bool *) calloc ((X_limit)*(Y_limit+2), sizeof(bool));
+        longCoordinate = (*totalCoordinate)[0];
         int i, x;
         for(x = 0; x < X_limit; x++){
-            totalCoordinate[x] = (*totalCoordinate + (Y_limit+2) * x);
+            (*totalCoordinate)[x] = (**totalCoordinate + (Y_limit+2) * x);
         }
 
         FILE *fp;
@@ -62,7 +61,7 @@ void initialize_boards(char* filename, int world_rank, int world_size,
         int row;
         int col;
         while(fscanf( fp,"%d %d", &row, &col )==2) {
-            totalCoordinate[row][col + 1] = true;
+            (*totalCoordinate)[row][col + 1] = true;
         }
         fclose(fp);
 
@@ -105,13 +104,6 @@ void initialize_boards(char* filename, int world_rank, int world_size,
     MPI_Scatterv(longCoordinate, subX_size_arr, subX_start_arr,
         MPI_C_BOOL, (*coordinate)[1], subX_size_arr[world_rank],
         MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
-    if (world_rank == 0)
-    {
-        free(totalCoordinate[0]);
-        free(totalCoordinate);
-    }
-    
     
     *nextCoordinate = (bool **) malloc((subX_size+2)*sizeof(bool*));
     (*nextCoordinate)[0] = (bool *) calloc ((subX_size+2)*(Y_limit+2), sizeof(bool));
@@ -193,6 +185,7 @@ void copyBound(int subX_size, int world_rank, int world_size, int Y_limit, bool 
 int main(int argc, char** argv) {
     bool **coordinate;
     bool **nextCoordinate;
+    bool **totalCoordinate;
 
     // Initialize the MPI environment
     MPI_Init(&argc, &argv);
@@ -309,7 +302,7 @@ int main(int argc, char** argv) {
                         X_limit, Y_limit,
                         subX_start, subX_size,
                         subX_start_arr, subX_size_arr,
-                        &coordinate, &nextCoordinate);
+                        &coordinate, &nextCoordinate, &totalCoordinate);
         int i, x, y;
         for (i = 0; i < iteration; ++i)
         {
@@ -323,18 +316,22 @@ int main(int argc, char** argv) {
 
         }
 
-
+        MPI_Gatherv(coordinate[1], subX_size_arr[world_rank], MPI_C_BOOL,
+            longCoordinate[0], subX_size_arr, subX_start_arr, MPI_C_BOOL,
+            0, MPI_COMM_WORLD)
 
         
         // printf("start printing process %d\n", world_rank);
-        for(x=1;x<=subX_size;++x){
-            for(y=1;y<=Y_limit;++y){
-                if (coordinate[x][y])
-                {
-                    printf("%d %d\n", subX_start+x-1, y-1);
+        if (world_rank==0) {
+            for(x=0;x<X_limit;++x) {
+                for(y=1;y<=Y_limit;++y) {
+                    if (longCoordinate[x][y]) {
+                        printf("%d %d\n", x, y-1);
+                    }
                 }
             }
         }
+        
 
     }
 
@@ -343,6 +340,12 @@ int main(int argc, char** argv) {
     free(coordinate);
     free(nextCoordinate[0]);
     free(nextCoordinate);
+
+    if (world_rank == 0)
+    {
+        free(totalCoordinate[0]);
+        free(totalCoordinate);
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
     double end = MPI_Wtime();
