@@ -318,7 +318,7 @@ int main(int argc, char** argv) {
 
         MPI_Gatherv(coordinate[1], subX_size_arr[world_rank], MPI_C_BOOL,
             longCoordinate[0], subX_size_arr, subX_start_arr, MPI_C_BOOL,
-            0, MPI_COMM_WORLD)
+            0, MPI_COMM_WORLD);
 
         
         // printf("start printing process %d\n", world_rank);
