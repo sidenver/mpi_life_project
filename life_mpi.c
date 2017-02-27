@@ -187,7 +187,7 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    int start = MPI_Wtime();
+    float start = MPI_Wtime();
 
     int iteration;
     sscanf(argv[2], "%d", &iteration);
@@ -318,7 +318,7 @@ int main(int argc, char** argv) {
     free(nextCoordinate);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    int end = MPI_Wtime();
+    float end = MPI_Wtime();
 
     if (world_rank == 0) { /* use time on master node */
         printf("Runtime with %d processes on dataset %s = %f\n", world_size, argv[1], end-start);
