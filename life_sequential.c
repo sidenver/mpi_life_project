@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <time.h>
 
 int main(int argc, char** argv) {
     if (argc!=5)
         return -1;
 
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
+    // clock_t start, end;
+    // double cpu_time_used;
+    // start = clock();
     int iteration;
     sscanf(argv[2], "%d", &iteration);
 
@@ -94,9 +93,9 @@ int main(int argc, char** argv) {
     free(coordinate);
     free(nextCoordinate[0]);
     free(nextCoordinate);
-    end = clock();
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("time used: %f\n", cpu_time_used);
+    // end = clock();
+    // cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    // printf("time used: %f\n", cpu_time_used);
 
     return 0;
 }
